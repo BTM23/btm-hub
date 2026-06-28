@@ -1,1 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BTM Hub — Operations</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#222;--bg4:#2a2a2a;
+--tx:#e8e8e8;--tx2:#a0a0a0;--tx3:#666;
+--bd:#2a2a2a;--bd2:#333;--bd3:#444;
+--yellow:#FFB81C;--yellowd:#e6a619;
+--green:#3a8a4a;--greenl:#5DCAA5;
+--blue:#2a6aaa;--bluel:#85B7EB;
+--amber:#8a5a10;--amberl:#FAC775;
+--purple:#6a5aaa;--purplel:#AFA9EC;
+--red:#8a2a2a;--redl:#F09595;
+--radius:8px;--radius2:12px;
+}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);font-size:13px}
+a{color:var(--yellow);text-decoration:none}
+a:hover{text-decoration:underline}
 
+/* LAYOUT */
+#app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:180px;min-width:180px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow-y:auto}
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar-header{padding:16px 14px 12px;border-bottom:1px solid var(--bd)}
+.logo-row{display:flex;align-items:center;gap:9px}
+.logo-box{width:34px;height:34px;background:var(--yellow);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#000;flex-shrink:0}
+.logo-title{font-size:13px;font-weight:600;color:var(--tx)}
+.logo-sub{font-size:10px;color:var(--tx2);margin-top:1px}
+.nav-group{padding:10px 0 4px}
+.nav-label{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--tx3);padding:0 14px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 14px;cursor:pointer;color:var(--tx2);font-size:12px;transition:all .12s;position:relative}
+.nav-item:hover{background:var(--bg3);color:var(--tx)}
+.nav-item.active{background:var(--bg3);color:var(--tx);font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2.5px;background:var(--yellow);border-radius:0 2px 2px 0}
+.nav-item .ti{font-size:15px;flex-shrink:0}
+.nav-badge{background:var(--yellow);color:#000;font-size:9px;font-weight:700;border-radius:8px;padding:1px 6px;margin-left:auto}
+
+/* TOPBAR */
+.topbar{padding:14px 20px 12px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:12px}
+.topbar-title h1{font-size:16px;font-weight:600;color:var(--tx)}
+.topbar-title p{font-size:11px;color:var(--tx2);margin-top:2px}
+.topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{padding:6px 13px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--bd2);background:transparent;color:var(--tx2);display:flex;align-items:center;gap:5px;transition:all .12s}
+.btn:hover{background:var(--bg3);color:var(--tx);border-color:var(--bd3)}
+.btn.primary{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:600}
+.btn.primary:hover{background:var(--yellowd);border-color:var(--yellowd)}
+
+/* SECTION */
+.section{display:none;flex:1;overflow:hidden;flex-direction:column}
+.section.active{display:flex}
+
+/* STATS BAR */
+.stats-bar{display:flex;border-bottom:1px solid var(--bd);background:var(--bg2)}
+.stat-item{flex:1;padding:12px 16px;text-align:center;border-right:1px solid var(--bd)}
+.stat-item:last-child{border-right:none}
+.stat-num{font-size:22px;font-weight:600;line-height:1}
+.stat-label{font-size:10px;color:var(--tx2);margin-top:3px}
+.c-yellow{color:var(--yellow)}
+.c-green{color:var(--greenl)}
+.c-blue{color:var(--bluel)}
+.c-amber{color:var(--amberl)}
+.c-purple{color:var(--purplel)}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--bd)}
+.search-box{position:relative;flex:1}
+.search-box .ti{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--tx3);pointer-events:none}
+.search-box input{width:100%;padding:7px 10px 7px 30px;background:var(--bg3);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px}
+.search-box input::placeholder{color:var(--tx3)}
+.search-box input:focus{outline:none;border-color:var(--yellow)}
+select.flt{padding:7px 10px;background:var(--bg3);border:1px solid var(--bd2);border-radius:6px;color:var(--tx2);font-size:11px;cursor:pointer}
+select.flt:focus{outline:none;border-color:var(--yellow)}
+
+/* TABLE */
+.table-wrap{flex:1;overflow-y:auto}
+table{width:100%;border-collapse:collapse}
+thead th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.04em;color:var(--tx3);border-bottom:1px solid var(--bd);background:var(--bg2);position:sticky;top:0;z-index:2;white-space:nowrap;text-transform:uppercase}
+tbody tr{border-bottom:1px solid var(--bd);cursor:pointer;transition:background .1s}
+tbody tr:hover,tbody tr.sel{background:var(--bg3)}
+td{padding:10px 12px;color:var(--tx);vertical-align:middle}
+.td-name{font-weight:500;font-size:13px}
+.td-muted{color:var(--tx2);font-size:12px}
+.td-tiny{color:var(--tx3);font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chev{color:var(--tx3);font-size:12px;transition:transform .15s}
+.chev.open{transform:rotate(90deg)}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.02em}
+.lv-d1{background:#0d2040;color:#85B7EB}
+.lv-d2{background:#0d250d;color:#97C459}
+.lv-d3{background:#252010;color:#EF9F27}
+.lv-juco{background:#250d0d;color:#F09595}
+.st-active{background:#0a2018;color:#5DCAA5}
+.st-warm{background:#251a05;color:#FAC775}
+.st-prospect{background:#15103a;color:#AFA9EC}
+.st-emailed{background:#0d1a2a;color:#85B7EB}
+.st-cold{background:#1a1a1a;color:#666}
+.pri-high{background:#300d0d;color:#F09595}
+.pri-med{background:#251a05;color:#FAC775}
+.pri-low{background:#0d250d;color:#97C459}
+.tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;background:var(--bg4);color:var(--tx2);border:1px solid var(--bd2)}
+
+/* INLINE EDIT PANEL */
+.edit-row td{padding:0}
+.edit-panel{background:var(--bg3);border-bottom:1px solid var(--bd);padding:14px 16px}
+.ep-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.ep-grid.g2{grid-template-columns:repeat(2,1fr)}
+.ep-grid.g4{grid-template-columns:repeat(4,1fr)}
+.ep-full{grid-column:1/-1}
+.ef label{font-size:10px;color:var(--tx2);margin-bottom:3px;display:block;font-weight:500}
+.ef input,.ef select,.ef textarea{width:100%;padding:6px 8px;font-size:12px;background:var(--bg2);border:1px solid var(--bd2);border-radius:5px;color:var(--tx)}
+.ef textarea{resize:vertical;min-height:54px;font-family:inherit}
+.ef input:focus,.ef select:focus,.ef textarea:focus{outline:none;border-color:var(--yellow)}
+.ep-actions{display:flex;gap:8px}
+.btn-save{background:var(--yellow);border:none;color:#000;font-size:11px;font-weight:700;padding:6px 14px;border-radius:5px;cursor:pointer}
+.btn-save:hover{background:var(--yellowd)}
+.btn-del{background:transparent;border:1px solid #5a2020;color:#F09595;font-size:11px;padding:6px 12px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:4px}
+.btn-del:hover{background:#2a0d0d}
+
+/* FOOTER */
+.table-footer{padding:9px 16px;font-size:11px;color:var(--tx3);background:var(--bg2);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+
+/* LINKS GRID */
+.links-wrap{flex:1;overflow-y:auto;padding:16px}
+.links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.link-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius);padding:12px 14px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:10px}
+.link-card:hover{border-color:var(--yellow);background:var(--bg3)}
+.link-icon{width:32px;height:32px;border-radius:6px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+.link-name{font-size:12px;font-weight:500;color:var(--tx)}
+.link-cat{font-size:10px;color:var(--tx3);margin-top:2px}
+.pills-wrap{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px 0;background:var(--bg2);border-bottom:1px solid var(--bd)}
+.pill{padding:4px 12px;border-radius:14px;font-size:11px;cursor:pointer;border:1px solid var(--bd2);color:var(--tx2);background:transparent;transition:all .12s}
+.pill:hover,.pill.on{background:var(--yellow);border-color:var(--yellow);color:#000;font-weight:600}
+
+/* CARDS (Charlotte pipeline) */
+.pipeline-wrap{flex:1;overflow-y:auto;padding:16px}
+.pipeline-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
+.pcol{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius2);overflow:hidden}
+.pcol-header{padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.pcol-title{font-size:12px;font-weight:600;color:var(--tx)}
+.pcol-count{font-size:10px;color:var(--tx3)}
+.pcol-body{padding:8px}
+.pcard{background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:10px;margin-bottom:6px;cursor:pointer;transition:all .12s}
+.pcard:last-child{margin-bottom:0}
+.pcard:hover{border-color:var(--yellow)}
+.pcard-school{font-size:12px;font-weight:500;color:var(--tx)}
+.pcard-conf{font-size:10px;color:var(--tx2);margin-top:2px}
+.pcard-tags{margin-top:6px;display:flex;gap:4px;flex-wrap:wrap}
+
+/* REVENUE */
+.rev-wrap{flex:1;overflow-y:auto;padding:16px}
+.rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.metric-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--radius2);padding:14px 16px}
+.mc-label{font-size:10px;color:var(--tx2);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.mc-val{font-size:24px;font-weight:600;margin-top:4px;color:var(--tx)}
+.mc-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg2);border:1px solid var(--bd3);border-radius:var(--radius2);padding:20px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--tx)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-grid .ef.full{grid-column:1/-1}
+.modal-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.btn-cancel{background:transparent;border:1px solid var(--bd2);color:var(--tx2);font-size:12px;padding:7px 14px;border-radius:5px;cursor:pointer}
+.btn-cancel:hover{border-color:var(--bd3);color:var(--tx)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd3);border-radius:3px}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--tx3)}
+.empty .ti{font-size:28px;display:block;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo-row">
+      <div class="logo-box">BTM</div>
+      <div>
+        <div class="logo-title">BTM Hub</div>
+        <div class="logo-sub">Operations</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Core</div>
+    <div class="nav-item active" onclick="showSection('links',this)"><i class="ti ti-link"></i>Links hub</div>
+    <div class="nav-item" onclick="showSection('tasks',this)"><i class="ti ti-checkbox"></i>Tasks<span class="nav-badge" id="tasks-badge">0</span></div>
+    <div class="nav-item" onclick="showSection('athletes',this)"><i class="ti ti-users"></i>Athletes</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Recruiting</div>
+    <div class="nav-item" onclick="showSection('charlotte',this)"><i class="ti ti-user-circle"></i>Charlotte</div>
+    <div class="nav-item" onclick="showSection('coaches',this)"><i class="ti ti-whistle"></i>Coaches</div>
+    <div class="nav-item" onclick="showSection('film',this)"><i class="ti ti-video"></i>Film pipeline</div>
+  </div>
+
+  <div class="nav-group">
+    <div class="nav-label">Business</div>
+    <div class="nav-item" onclick="showSection('revenue',this)"><i class="ti ti-chart-bar"></i>Revenue</div>
+    <div class="nav-item" onclick="showSection('content',this)"><i class="ti ti-calendar"></i>Content</div>
+    <div class="nav-item" onclick="showSection('camps',this)"><i class="ti ti-building-stadium"></i>Camps</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-area">
+
+<!-- TOPBAR (dynamic) -->
+<div class="topbar">
+  <div class="topbar-title">
+    <h1 id="topbar-title">Links hub</h1>
+    <p id="topbar-sub">Quick access to all BTM tools and resources</p>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn primary" id="btn-add" onclick="handleAdd()"><i class="ti ti-plus"></i><span id="btn-add-label">Add link</span></button>
+  </div>
+</div>
+
+<!-- ==================== LINKS ==================== -->
+<div id="sec-links" class="section active">
+  <div class="pills-wrap" id="link-pills"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="link-search" placeholder="Search links..." oninput="renderLinks()"></div>
+  </div>
+  <div class="links-wrap">
+    <div class="links-grid" id="links-grid"></div>
+  </div>
+  <div class="table-footer"><span id="links-footer"></span></div>
+</div>
+
+<!-- ==================== TASKS ==================== -->
+<div id="sec-tasks" class="section">
+  <div class="stats-bar" id="tasks-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="tasks-search" placeholder="Search tasks..." oninput="renderTasks()"></div>
+    <select class="flt" id="tasks-pri" onchange="renderTasks()"><option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option></select>
+    <select class="flt" id="tasks-status" onchange="renderTasks()"><option value="">All statuses</option><option>Not started</option><option>In progress</option><option>Done</option><option>Blocked</option></select>
+    <select class="flt" id="tasks-owner" onchange="renderTasks()"><option value="">All owners</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>Task</th><th>Owner</th><th>Priority</th><th>Status</th><th>Due</th><th>Notes</th></tr></thead>
+    <tbody id="tasks-body"></tbody></table>
+    <div id="tasks-empty" class="empty" style="display:none"><i class="ti ti-checkbox"></i>No tasks match</div>
+  </div>
+  <div class="table-footer"><span id="tasks-footer"></span></div>
+</div>
+
+<!-- ==================== ATHLETES ==================== -->
+<div id="sec-athletes" class="section">
+  <div class="stats-bar" id="athletes-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="athletes-search" placeholder="Search athletes..." oninput="renderAthletes()"></div>
+    <select class="flt" id="athletes-stage" onchange="renderAthletes()"><option value="">All stages</option><option>Active</option><option>Committed</option><option>Prospect</option><option>Inactive</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>Name</th><th>Sport</th><th>Target Level</th><th>Stage</th><th>GPA</th><th>Notes</th></tr></thead>
+    <tbody id="athletes-body"></tbody></table>
+    <div id="athletes-empty" class="empty" style="display:none"><i class="ti ti-users"></i>No athletes match</div>
+  </div>
+  <div class="table-footer"><span id="athletes-footer"></span></div>
+</div>
+
+<!-- ==================== CHARLOTTE ==================== -->
+<div id="sec-charlotte" class="section">
+  <div class="stats-bar" id="charlotte-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="charlotte-search" placeholder="Search schools..." oninput="renderCharlotte()"></div>
+    <select class="flt" id="charlotte-level" onchange="renderCharlotte()"><option value="">All levels</option><option>D1</option><option>D2</option><option>D3</option></select>
+    <select class="flt" id="charlotte-stage" onchange="renderCharlotte()"><option value="">All stages</option><option>Interest sent</option><option>Film sent</option><option>Call scheduled</option><option>Offer</option><option>Committed</option><option>Dead</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>School</th><th>Coach</th><th>Level</th><th>Conference</th><th>Stage</th><th>Last contact</th><th>Notes</th></tr></thead>
+    <tbody id="charlotte-body"></tbody></table>
+    <div id="charlotte-empty" class="empty" style="display:none"><i class="ti ti-user-circle"></i>No schools match</div>
+  </div>
+  <div class="table-footer"><span id="charlotte-footer"></span></div>
+</div>
+
+<!-- ==================== COACHES ==================== -->
+<div id="sec-coaches" class="section">
+  <div class="stats-bar" id="coaches-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="coaches-search" placeholder="Search coaches..." oninput="renderCoaches()"></div>
+    <select class="flt" id="coaches-level" onchange="renderCoaches()"><option value="">All levels</option><option>D1</option><option>D2</option><option>D3</option><option>JUCO</option></select>
+    <select class="flt" id="coaches-status" onchange="renderCoaches()"><option value="">All statuses</option><option>Active convo</option><option>Warm lead</option><option>Prospect</option><option>Emailed</option><option>Cold</option></select>
+    <select class="flt" id="coaches-conf" onchange="renderCoaches()"><option value="">All confs</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>Name</th><th>School</th><th>Role</th><th>Level</th><th>Conference</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody id="coaches-body"></tbody></table>
+    <div id="coaches-empty" class="empty" style="display:none"><i class="ti ti-whistle"></i>No coaches match</div>
+  </div>
+  <div class="table-footer"><span id="coaches-footer"></span></div>
+</div>
+
+<!-- ==================== FILM ==================== -->
+<div id="sec-film" class="section">
+  <div class="stats-bar" id="film-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="film-search" placeholder="Search film..." oninput="renderFilm()"></div>
+    <select class="flt" id="film-status" onchange="renderFilm()"><option value="">All statuses</option><option>Not started</option><option>In editing</option><option>Ready</option><option>Sent</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>Athlete</th><th>Type</th><th>Status</th><th>Editor</th><th>Due</th><th>Link</th><th>Notes</th></tr></thead>
+    <tbody id="film-body"></tbody></table>
+    <div id="film-empty" class="empty" style="display:none"><i class="ti ti-video"></i>No film items match</div>
+  </div>
+  <div class="table-footer"><span id="film-footer"></span></div>
+</div>
+
+<!-- ==================== REVENUE ==================== -->
+<div id="sec-revenue" class="section">
+  <div class="rev-wrap">
+    <div class="rev-grid" id="rev-metrics"></div>
+    <div class="toolbar" style="background:transparent;padding:0 0 12px">
+      <div class="search-box"><i class="ti ti-search"></i><input id="revenue-search" placeholder="Search revenue..." oninput="renderRevenue()"></div>
+      <select class="flt" id="revenue-type" onchange="renderRevenue()"><option value="">All types</option><option>Pathway</option><option>NIL</option><option>Camp</option><option>Retainer</option><option>Other</option></select>
+      <select class="flt" id="revenue-status" onchange="renderRevenue()"><option value="">All statuses</option><option>Paid</option><option>Pending</option><option>Overdue</option></select>
+    </div>
+    <div class="table-wrap" style="flex:none;max-height:420px">
+      <table><thead><tr><th style="width:16px"></th><th>Client</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th><th>Notes</th></tr></thead>
+      <tbody id="revenue-body"></tbody></table>
+      <div id="revenue-empty" class="empty" style="display:none"><i class="ti ti-chart-bar"></i>No revenue records match</div>
+    </div>
+    <div class="table-footer"><span id="revenue-footer"></span></div>
+  </div>
+</div>
+
+<!-- ==================== CONTENT ==================== -->
+<div id="sec-content" class="section">
+  <div class="stats-bar" id="content-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="content-search" placeholder="Search content..." oninput="renderContent()"></div>
+    <select class="flt" id="content-platform" onchange="renderContent()"><option value="">All platforms</option><option>Instagram</option><option>TikTok</option><option>YouTube</option><option>LinkedIn</option></select>
+    <select class="flt" id="content-status" onchange="renderContent()"><option value="">All statuses</option><option>Idea</option><option>Scripting</option><option>Filming</option><option>Editing</option><option>Scheduled</option><option>Posted</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>Title</th><th>Platform</th><th>Type</th><th>Status</th><th>Date</th><th>Owner</th><th>Notes</th></tr></thead>
+    <tbody id="content-body"></tbody></table>
+    <div id="content-empty" class="empty" style="display:none"><i class="ti ti-calendar"></i>No content items match</div>
+  </div>
+  <div class="table-footer"><span id="content-footer"></span></div>
+</div>
+
+<!-- ==================== CAMPS ==================== -->
+<div id="sec-camps" class="section">
+  <div class="stats-bar" id="camps-stats"></div>
+  <div class="toolbar">
+    <div class="search-box"><i class="ti ti-search"></i><input id="camps-search" placeholder="Search camps..." oninput="renderCamps()"></div>
+    <select class="flt" id="camps-status" onchange="renderCamps()"><option value="">All statuses</option><option>Planning</option><option>Open</option><option>Full</option><option>Complete</option></select>
+  </div>
+  <div class="table-wrap">
+    <table><thead><tr><th style="width:16px"></th><th>Camp name</th><th>Date</th><th>Location</th><th>Capacity</th><th>Registered</th><th>Status</th><th>Revenue</th><th>Notes</th></tr></thead>
+    <tbody id="camps-body"></tbody></table>
+    <div id="camps-empty" class="empty" style="display:none"><i class="ti ti-building-stadium"></i>No camps match</div>
+  </div>
+  <div class="table-footer"><span id="camps-footer"></span></div>
+</div>
+
+</div><!-- end main-area -->
+</div><!-- end app -->
+
+<!-- UNIVERSAL ADD MODAL -->
+<div id="modal" style="display:none">
+  <div class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <h3 id="modal-title">Add item</h3>
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveModal()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+let DATA = {
+  links: [
+    {id:1,name:"BTM Website",url:"https://btm.com",cat:"Brand",icon:"ti-world"},
+    {id:2,name:"BTM Instagram",url:"https://instagram.com/btm",cat:"Brand",icon:"ti-brand-instagram"},
+    {id:3,name:"Google Drive",url:"https://drive.google.com",cat:"Operations",icon:"ti-brand-google-drive"},
+    {id:4,name:"Gmail",url:"https://mail.google.com",cat:"Operations",icon:"ti-mail"},
+    {id:5,name:"BTM Hub Data",url:"https://docs.google.com/spreadsheets",cat:"Operations",icon:"ti-table"},
+    {id:6,name:"GitHub Repo",url:"https://github.com",cat:"Operations",icon:"ti-brand-github"},
+    {id:7,name:"Hudl",url:"https://hudl.com",cat:"Recruiting",icon:"ti-video"},
+    {id:8,name:"NCSA",url:"https://ncsasports.org",cat:"Recruiting",icon:"ti-trophy"},
+    {id:9,name:"NCAA Eligibility Center",url:"https://eligibilitycenter.org",cat:"Recruiting",icon:"ti-certificate"},
+    {id:10,name:"MSE Platform",url:"https://mse.com",cat:"MSE",icon:"ti-school"},
+    {id:11,name:"Canva",url:"https://canva.com",cat:"Marketing",icon:"ti-palette"},
+    {id:12,name:"Notion",url:"https://notion.so",cat:"Tools",icon:"ti-notes"},
+  ],
+  tasks: [
+    {id:1,task:"Follow up with Nate Champion re Charlotte",owner:"Anthony",priority:"High",status:"In progress",due:"2026-06-28",notes:"D1 NEC — good fit"},
+    {id:2,task:"Send film to Jacob Fleegle",owner:"Dillon",priority:"High",status:"Not started",due:"2026-06-27",notes:"Deadline 12am Thurs"},
+    {id:3,task:"Update Charlotte athlete profile",owner:"Shannon",priority:"Medium",status:"In progress",due:"2026-06-30",notes:""},
+    {id:4,task:"Close BTM NIL contract with athlete",owner:"Dillon",priority:"High",status:"Not started",due:"2026-07-01",notes:""},
+    {id:5,task:"Post BTM content — recruiting reel",owner:"Shannon",priority:"Medium",status:"Scheduled",due:"2026-06-27",notes:"Instagram + TikTok"},
+    {id:6,task:"Set up MSE July certification cohort",owner:"Dillon",priority:"Medium",status:"Not started",due:"2026-07-05",notes:"Jeff + Shobana delivery"},
+    {id:7,task:"Build $97 AUD masterclass landing page",owner:"Dillon",priority:"High",status:"Not started",due:"2026-07-10",notes:"BTM Pathway front door"},
+    {id:8,task:"Big Sky conference outreach — batch email",owner:"Anthony",priority:"Low",status:"Done",due:"2026-06-24",notes:"4 emails sent to Idaho, Idaho State, Montana, Montana State"},
+    {id:9,task:"Research AAC D1 coaches for Charlotte",owner:"Anthony",priority:"Medium",status:"Not started",due:"2026-07-03",notes:""},
+    {id:10,task:"Film new highlight reel — Keegan",owner:"Dillon",priority:"Medium",status:"Not started",due:"2026-07-08",notes:""},
+  ],
+  athletes: [
+    {id:1,name:"Charlotte Ogier",sport:"Basketball (W)",target:"D1/D2",stage:"Active",gpa:"3.4",grad:"2027",notes:"AAC + NEC primary targets. Strong film. Committed to process."},
+    {id:2,name:"Keegan Phillips",sport:"Basketball (M)",target:"D2",stage:"Active",gpa:"3.1",grad:"2027",notes:"First case study for BTM Pathway. PSAC target."},
+  ],
+  charlotte: [
+    {id:1,school:"Le Moyne College",coach:"Nate Champion",level:"D1",conf:"NEC",stage:"Call scheduled",last:"2026-06-25",notes:"Head coach — active convo this week. Very interested."},
+    {id:2,school:"Charlotte",coach:"Dalmar Ali",level:"D1",conf:"AAC",stage:"Interest sent",last:"2026-06-22",notes:"Warm lead. Coach follows BTM IG."},
+    {id:3,school:"Messiah University",coach:"Jacob Fleegle",level:"D3",conf:"MAC Freedom",stage:"Film sent",last:"2026-06-26",notes:"Aid: $25-40k. D3 decision deadline 12am Thurs."},
+    {id:4,school:"Seton Hill",coach:"Matt Wilkins",level:"D2",conf:"PSAC",stage:"Call scheduled",last:"2026-06-24",notes:"Anthony in active convo."},
+    {id:5,school:"Idaho",coach:"Drew Muscatell",level:"D1",conf:"Big Sky",stage:"Interest sent",last:"2026-06-24",notes:"Anthony emailed 12 June."},
+    {id:6,school:"Idaho State",coach:"Seton Sobolewski",level:"D1",conf:"Big Sky",stage:"Interest sent",last:"2026-06-24",notes:"Anthony emailed 12 June."},
+    {id:7,school:"Montana",coach:"Nate Harris",level:"D1",conf:"Big Sky",stage:"Interest sent",last:"2026-06-24",notes:"Anthony emailed 12 June."},
+    {id:8,school:"Montana State",coach:"Ryan Johnson",level:"D1",conf:"Big Sky",stage:"Interest sent",last:"2026-06-24",notes:"Anthony emailed 12 June."},
+    {id:9,school:"Coastal Carolina",coach:"Kylan Butler",level:"D1",conf:"Sun Belt",stage:"Interest sent",last:"2026-06-20",notes:"Prospect — no response yet."},
+    {id:10,school:"USF",coach:"Allen Payne",level:"D1",conf:"AAC",stage:"Interest sent",last:"2026-06-20",notes:"Asst coach prospect."},
+  ],
+  coaches: [
+    {id:1,name:"Dan Stoner",school:"Saint Vincent (SVC)",role:"Asst Coach",level:"D3",conf:"PAC",status:"Active convo",via:"Direct",notes:"Very interested. Recruiting for BTM Tour co-host."},
+    {id:2,name:"Chris Klimchok",school:"Pitt-Greensburg",role:"Head Coach",level:"D3",conf:"UAA",status:"Warm lead",via:"Direct",notes:"Reached out, warm — waiting for return call."},
+    {id:3,name:"Delont Joyce",school:"Anne Arundel CC",role:"Head Coach",level:"JUCO",conf:"NJCAA",status:"Active convo",via:"Direct",notes:"Active conversation in progress."},
+    {id:4,name:"Nate Champion",school:"Le Moyne College",role:"Head Coach",level:"D1",conf:"NEC",status:"Active convo",via:"Direct",notes:"Recruiting for Charlotte this week. D1 NEC."},
+    {id:5,name:"Dalmar Ali",school:"Charlotte",role:"Head Coach",level:"D1",conf:"AAC",status:"Warm lead",via:"Direct",notes:"Follows BTM IG. Warm lead."},
+    {id:6,name:"Jacob Fleegle",school:"Messiah University",role:"Head Coach",level:"D3",conf:"MAC Freedom",status:"Active convo",via:"Direct",notes:"Aid: $10k too low, $25k, $40k. D3 deadline 12am Thurs."},
+    {id:7,name:"Matt Wilkins",school:"Seton Hill",role:"Head Coach",level:"D2",conf:"PSAC",status:"Active convo",via:"Direct",notes:"Anthony in active convo."},
+    {id:8,name:"Mark Christopher",school:"Calvin University",role:"Head Coach",level:"D3",conf:"MIAA",status:"Warm lead",via:"Direct",notes:"Following Charlotte's recruitment."},
+    {id:9,name:"Kylan Butler",school:"Coastal Carolina",role:"—",level:"D1",conf:"Sun Belt",status:"Prospect",via:"Direct",notes:""},
+    {id:10,name:"Allen Payne",school:"USF",role:"Asst Coach",level:"D1",conf:"AAC",status:"Prospect",via:"Direct",notes:""},
+    {id:11,name:"Ryan Daly",school:"Syracuse",role:"Asst Coach",level:"D1",conf:"ACC",status:"Prospect",via:"Direct",notes:""},
+    {id:12,name:"Aaron Proctor",school:"Grambling U",role:"Asst Coach",level:"D1",conf:"SWAC",status:"Prospect",via:"Direct",notes:""},
+    {id:13,name:"Nashad Mackey",school:"USC Upstate",role:"Asst Coach",level:"D1",conf:"Big South",status:"Prospect",via:"Direct",notes:""},
+    {id:14,name:"Drew Muscatell",school:"Idaho",role:"Assoc HC",level:"D1",conf:"Big Sky",status:"Emailed",via:"Direct",notes:"Anthony emailed re Charlotte 12 June."},
+    {id:15,name:"Seton Sobolewski",school:"Idaho State",role:"Head Coach",level:"D1",conf:"Big Sky",status:"Emailed",via:"Direct",notes:"Anthony emailed re Charlotte 12 June."},
+    {id:16,name:"Nate Harris",school:"Montana",role:"Head Coach",level:"D1",conf:"Big Sky",status:"Emailed",via:"Direct",notes:"Anthony emailed re Charlotte 12 June."},
+    {id:17,name:"Ryan Johnson",school:"Montana State",role:"Assoc HC",level:"D1",conf:"Big Sky",status:"Emailed",via:"Direct",notes:"Anthony emailed re Charlotte 12 June."},
+    {id:18,name:"Dan Monson",school:"Eastern Washington",role:"Head Coach",level:"D1",conf:"Big Sky",status:"Cold",via:"Direct",notes:"JGL. 509-359-23..."},
+  ],
+  film: [
+    {id:1,athlete:"Charlotte Ogier",type:"Highlight reel",status:"Ready",editor:"Dillon",due:"2026-06-27",link:"",notes:"Full 4-min reel. Ready to send."},
+    {id:2,athlete:"Charlotte Ogier",type:"Skills video",status:"Sent",editor:"Dillon",due:"2026-06-20",link:"",notes:"Sent to Messiah + Le Moyne."},
+    {id:3,athlete:"Keegan Phillips",type:"Highlight reel",status:"Not started",editor:"Dillon",due:"2026-07-08",link:"",notes:"Schedule filming session."},
+    {id:4,athlete:"Charlotte Ogier",type:"Game footage",status:"In editing",editor:"Dillon",due:"2026-07-01",link:"",notes:"Full game vs opponent — cutting best clips."},
+  ],
+  revenue: [
+    {id:1,client:"Charlotte Ogier family",type:"Pathway",amount:3500,status:"Paid",date:"2026-05-01",notes:"Pathway Program Phase 1 deposit"},
+    {id:2,client:"Keegan Phillips family",type:"Pathway",amount:3500,status:"Paid",date:"2026-05-15",notes:"Pathway Program Phase 1 deposit"},
+    {id:3,client:"BTM Camp — June",type:"Camp",amount:4200,status:"Paid",date:"2026-06-10",notes:"28 athletes × $150"},
+    {id:4,client:"Charlotte Ogier family",type:"Pathway",amount:2000,status:"Pending",date:"2026-07-01",notes:"Phase 2 installment"},
+    {id:5,client:"Keegan Phillips family",type:"Pathway",amount:2000,status:"Pending",date:"2026-07-01",notes:"Phase 2 installment"},
+    {id:6,client:"MSE Club — Melbourne Academy",type:"Retainer",amount:1200,status:"Paid",date:"2026-06-01",notes:"Monthly club licensing"},
+    {id:7,client:"MSE Club — South Metro",type:"Retainer",amount:1200,status:"Paid",date:"2026-06-01",notes:"Monthly club licensing"},
+  ],
+  content: [
+    {id:1,title:"Charlotte Pathway Pt 1 — The Journey Begins",platform:"Instagram",type:"Reel",status:"Posted",date:"2026-06-10",owner:"Shannon",notes:"1.2k views"},
+    {id:2,title:"BTM Recruiting Tips — D1 vs D2 paths",platform:"TikTok",type:"Video",status:"Posted",date:"2026-06-15",owner:"Shannon",notes:"3.4k views"},
+    {id:3,title:"Coach outreach — what NOT to do",platform:"Instagram",type:"Carousel",status:"Scheduled",date:"2026-06-27",owner:"Shannon",notes:""},
+    {id:4,title:"Meet the athletes — Charlotte + Keegan",platform:"YouTube",type:"Long form",status:"Filming",date:"2026-07-05",owner:"Dillon",notes:"Need to schedule shoot"},
+    {id:5,title:"BTM Masterclass teaser",platform:"Instagram",type:"Reel",status:"Scripting",date:"2026-07-10",owner:"Dillon",notes:"Front-door to $97 product"},
+    {id:6,title:"MSE Certification — what you get",platform:"LinkedIn",type:"Post",status:"Idea",date:"2026-07-15",owner:"Shannon",notes:""},
+  ],
+  camps: [
+    {id:1,name:"BTM Summer Showcase",date:"2026-06-10",location:"Melbourne, VIC",capacity:40,registered:28,status:"Complete",revenue:4200,notes:"Very successful. 28 athletes. Plan Q3 repeat."},
+    {id:2,name:"BTM Development Camp — July",date:"2026-07-19",location:"Melbourne, VIC",capacity:30,registered:8,status:"Open",revenue:0,notes:"Early reg open. Target 25+."},
+    {id:3,name:"BTM Elite ID Camp",date:"2026-09-06",location:"Sydney, NSW",capacity:24,registered:0,status:"Planning",revenue:0,notes:"First Sydney camp. Partnership with local club TBC."},
+  ],
+};
+
+// ===== SECTION CONFIG =====
+const SECTIONS = {
+  links:{title:"Links hub",sub:"Quick access to all BTM tools and resources",addLabel:"Add link"},
+  tasks:{title:"Tasks",sub:"All open and completed tasks across BTM and MSE",addLabel:"Add task"},
+  athletes:{title:"Athletes",sub:"Active athletes in the BTM pathway program",addLabel:"Add athlete"},
+  charlotte:{title:"Charlotte Ogier — Recruiting pipeline",sub:"School contacts, stages, and next actions",addLabel:"Add school"},
+  coaches:{title:"Coach network",sub:"All contacts — active convos, warm leads, prospects",addLabel:"Add coach"},
+  film:{title:"Film pipeline",sub:"Highlight reels, skills videos, and game footage",addLabel:"Add film item"},
+  revenue:{title:"Revenue",sub:"Invoices, payments, and financial tracking",addLabel:"Add entry"},
+  content:{title:"Content calendar",sub:"Posts, reels, and campaigns across all platforms",addLabel:"Add content"},
+  camps:{title:"Camps",sub:"BTM camp schedule, registrations, and revenue",addLabel:"Add camp"},
+};
+
+let currentSection = 'links';
+let expandedId = {};
+let linkCatFilter = 'All';
+let nextId = 1000;
+
+// ===== NAV =====
+function showSection(id, el) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  currentSection = id;
+  const cfg = SECTIONS[id];
+  document.getElementById('topbar-title').textContent = cfg.title;
+  document.getElementById('topbar-sub').textContent = cfg.sub;
+  document.getElementById('btn-add-label').textContent = cfg.addLabel;
+  const renders = {links:renderLinks,tasks:renderTasks,athletes:renderAthletes,charlotte:renderCharlotte,coaches:renderCoaches,film:renderFilm,revenue:renderRevenue,content:renderContent,camps:renderCamps};
+  if(renders[id]) renders[id]();
+}
+
+function handleAdd(){ openModal(currentSection); }
+
+// ===== HELPERS =====
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function ef(label,id,val,type='text'){return`<div class="ef"><label>${label}</label><input id="${id}" type="${type}" value="${esc(val)}"></div>`}
+function es(label,id,val,opts){return`<div class="ef"><label>${label}</label><select id="${id}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select></div>`}
+function et(label,id,val){return`<div class="ef ep-full"><label>${label}</label><textarea id="${id}" rows="3">${esc(val)}</textarea></div>`}
+function g(id){return document.getElementById(id)}
+function gv(id){return(g(id)||{}).value||''}
+
+function lv(l){return{'D1':'lv-d1','D2':'lv-d2','D3':'lv-d3','JUCO':'lv-juco'}[l]||'lv-d3'}
+function stCoach(s){return{'Active convo':'st-active','Warm lead':'st-warm','Prospect':'st-prospect','Emailed':'st-emailed','Cold':'st-cold'}[s]||'st-cold'}
+function stTask(s){return{'In progress':'st-active','Done':'st-emailed','Not started':'st-cold','Scheduled':'st-prospect','Blocked':'st-warm'}[s]||'st-cold'}
+function stFilm(s){return{'Ready':'st-active','Sent':'st-emailed','In editing':'st-warm','Not started':'st-cold'}[s]||'st-cold'}
+function stContent(s){return{'Posted':'st-emailed','Scheduled':'st-active','Filming':'st-warm','Editing':'st-warm','Scripting':'st-prospect','Idea':'st-cold'}[s]||'st-cold'}
+function stCamp(s){return{'Complete':'st-emailed','Open':'st-active','Full':'st-warm','Planning':'st-cold'}[s]||'st-cold'}
+function stCharlotte(s){return{'Offer':'st-active','Call scheduled':'st-active','Film sent':'st-warm','Interest sent':'st-prospect','Committed':'st-emailed','Dead':'st-cold'}[s]||'st-cold'}
+function stRev(s){return{'Paid':'st-active','Pending':'st-warm','Overdue':'st-emailed'}[s]||'st-cold'}
+function pri(p){return{'High':'pri-high','Medium':'pri-med','Low':'pri-low'}[p]||'pri-low'}
+
+function toggleRow(section, id){
+  expandedId[section] = expandedId[section]===id ? null : id;
+  const renders = {tasks:renderTasks,athletes:renderAthletes,charlotte:renderCharlotte,coaches:renderCoaches,film:renderFilm,revenue:renderRevenue,content:renderContent,camps:renderCamps};
+  if(renders[section]) renders[section]();
+}
+
+function makeEditRow(cols, panelHtml, id, section){
+  return `<tr class="edit-row"><td colspan="${cols}"><div class="edit-panel">${panelHtml}</div></td></tr>`;
+}
+
+function updateBadge(){
+  const open = DATA.tasks.filter(t=>t.status!=='Done').length;
+  g('tasks-badge').textContent = open;
+}
+
+// ===== LINKS =====
+function renderLinks(){
+  const q = (g('link-search').value||'').toLowerCase();
+  const cats = [...new Set(DATA.links.map(l=>l.cat))];
+  // pills
+  g('link-pills').innerHTML = ['All',...cats].map(c=>`<button class="pill${c===linkCatFilter?' on':''}" onclick="setLinkCat('${c}')">${c}</button>`).join('');
+  const filtered = DATA.links.filter(l=>{
+    if(linkCatFilter!=='All'&&l.cat!==linkCatFilter) return false;
+    if(q&&!`${l.name} ${l.cat}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  g('links-grid').innerHTML = filtered.map(l=>`<div class="link-card" onclick="window.open('${l.url}','_blank')">
+    <div class="link-icon"><i class="ti ${l.icon||'ti-link'}"></i></div>
+    <div><div class="link-name">${esc(l.name)}</div><div class="link-cat">${esc(l.cat)}</div></div>
+  </div>`).join('');
+  g('links-footer').textContent = `Showing ${filtered.length} of ${DATA.links.length} links`;
+}
+function setLinkCat(c){linkCatFilter=c;renderLinks();}
+
+// ===== TASKS =====
+function renderTasks(){
+  const q=(g('tasks-search').value||'').toLowerCase();
+  const pri2=gv('tasks-pri'),st=gv('tasks-status'),ow=gv('tasks-owner');
+  const rows=DATA.tasks.filter(t=>{
+    if(q&&!`${t.task} ${t.owner} ${t.notes}`.toLowerCase().includes(q)) return false;
+    if(pri2&&t.priority!==pri2) return false;
+    if(st&&t.status!==st) return false;
+    if(ow&&t.owner!==ow) return false;
+    return true;
+  });
+  // owner filter
+  const owners=[...new Set(DATA.tasks.map(t=>t.owner))].sort();
+  const owSel=g('tasks-owner');const cur=owSel.value;
+  owSel.innerHTML='<option value="">All owners</option>'+owners.map(o=>`<option${o===cur?' selected':''}>${o}</option>`).join('');
+  // stats
+  const total=DATA.tasks.length,done=DATA.tasks.filter(t=>t.status==='Done').length,open=DATA.tasks.filter(t=>t.status!=='Done').length,high=DATA.tasks.filter(t=>t.priority==='High'&&t.status!=='Done').length;
+  g('tasks-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${total}</div><div class="stat-label">Total</div></div><div class="stat-item"><div class="stat-num c-green">${done}</div><div class="stat-label">Done</div></div><div class="stat-item"><div class="stat-num c-amber">${open}</div><div class="stat-label">Open</div></div><div class="stat-item"><div class="stat-num c-yellow">${high}</div><div class="stat-label">High priority</div></div>`;
+  g('tasks-empty').style.display=rows.length?'none':'block';
+  g('tasks-footer').textContent=`Showing ${rows.length} of ${DATA.tasks.length} tasks`;
+  const exp=expandedId.tasks;
+  g('tasks-body').innerHTML=rows.map(t=>`<tr class="${exp===t.id?'sel':''}" onclick="toggleRow('tasks',${t.id})">
+    <td><i class="ti ti-chevron-right chev${exp===t.id?' open':''}"></i></td>
+    <td class="td-name">${esc(t.task)}</td><td class="td-muted">${esc(t.owner)}</td>
+    <td><span class="badge ${pri(t.priority)}">${esc(t.priority)}</span></td>
+    <td><span class="badge ${stTask(t.status)}">${esc(t.status)}</span></td>
+    <td class="td-muted">${esc(t.due)}</td><td class="td-tiny">${esc(t.notes)||'—'}</td>
+  </tr>${exp===t.id?makeEditRow(7,`<div class="ep-grid g4">
+    ${ef('Task','et_task',t.task)}${es('Owner','et_owner',t.owner,['Dillon','Anthony','Shannon','Jeff','Shobana'])}
+    ${es('Priority','et_pri',t.priority,['High','Medium','Low'])}${es('Status','et_status',t.status,['Not started','In progress','Done','Blocked','Scheduled'])}
+    ${ef('Due date','et_due',t.due,'date')}${et('Notes','et_notes',t.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveTask(${t.id},event)">Save</button><button class="btn-del" onclick="deleteItem('tasks',${t.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,t.id,'tasks'):''}
+  `).join('');
+  updateBadge();
+}
+
+function saveTask(id,e){e.stopPropagation();const t=DATA.tasks.find(x=>x.id===id);if(!t)return;
+  t.task=gv('et_task');t.owner=gv('et_owner');t.priority=gv('et_pri');t.status=gv('et_status');t.due=gv('et_due');t.notes=gv('et_notes');
+  expandedId.tasks=null;renderTasks();}
+
+// ===== ATHLETES =====
+function renderAthletes(){
+  const q=(g('athletes-search').value||'').toLowerCase();
+  const st=gv('athletes-stage');
+  const rows=DATA.athletes.filter(a=>{
+    if(q&&!`${a.name} ${a.sport} ${a.notes}`.toLowerCase().includes(q)) return false;
+    if(st&&a.stage!==st) return false;
+    return true;
+  });
+  g('athletes-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${DATA.athletes.length}</div><div class="stat-label">Total</div></div><div class="stat-item"><div class="stat-num c-yellow">${DATA.athletes.filter(a=>a.stage==='Active').length}</div><div class="stat-label">Active</div></div>`;
+  g('athletes-empty').style.display=rows.length?'none':'block';
+  g('athletes-footer').textContent=`Showing ${rows.length} of ${DATA.athletes.length} athletes`;
+  const exp=expandedId.athletes;
+  g('athletes-body').innerHTML=rows.map(a=>`<tr class="${exp===a.id?'sel':''}" onclick="toggleRow('athletes',${a.id})">
+    <td><i class="ti ti-chevron-right chev${exp===a.id?' open':''}"></i></td>
+    <td class="td-name">${esc(a.name)}</td><td class="td-muted">${esc(a.sport)}</td>
+    <td><span class="tag">${esc(a.target)}</span></td>
+    <td><span class="badge ${stTask(a.stage)}">${esc(a.stage)}</span></td>
+    <td class="td-muted">${esc(a.gpa)}</td><td class="td-tiny">${esc(a.notes)||'—'}</td>
+  </tr>${exp===a.id?makeEditRow(7,`<div class="ep-grid">
+    ${ef('Name','ea_name',a.name)}${ef('Sport','ea_sport',a.sport)}${ef('Target level','ea_target',a.target)}
+    ${es('Stage','ea_stage',a.stage,['Active','Committed','Prospect','Inactive'])}${ef('GPA','ea_gpa',a.gpa)}${ef('Grad year','ea_grad',a.grad)}
+    ${et('Notes','ea_notes',a.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveAthlete(${a.id},event)">Save</button><button class="btn-del" onclick="deleteItem('athletes',${a.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,a.id,'athletes'):''}
+  `).join('');
+}
+function saveAthlete(id,e){e.stopPropagation();const a=DATA.athletes.find(x=>x.id===id);if(!a)return;
+  a.name=gv('ea_name');a.sport=gv('ea_sport');a.target=gv('ea_target');a.stage=gv('ea_stage');a.gpa=gv('ea_gpa');a.grad=gv('ea_grad');a.notes=gv('ea_notes');
+  expandedId.athletes=null;renderAthletes();}
+
+// ===== CHARLOTTE =====
+function renderCharlotte(){
+  const q=(g('charlotte-search').value||'').toLowerCase();
+  const lv2=gv('charlotte-level'),st=gv('charlotte-stage');
+  const rows=DATA.charlotte.filter(c=>{
+    if(q&&!`${c.school} ${c.coach} ${c.conf} ${c.notes}`.toLowerCase().includes(q)) return false;
+    if(lv2&&c.level!==lv2) return false;
+    if(st&&c.stage!==st) return false;
+    return true;
+  });
+  const total=DATA.charlotte.length,calls=DATA.charlotte.filter(c=>c.stage==='Call scheduled').length,offers=DATA.charlotte.filter(c=>c.stage==='Offer').length,committed=DATA.charlotte.filter(c=>c.stage==='Committed').length;
+  g('charlotte-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${total}</div><div class="stat-label">Schools</div></div><div class="stat-item"><div class="stat-num c-green">${calls}</div><div class="stat-label">Calls scheduled</div></div><div class="stat-item"><div class="stat-num c-yellow">${offers}</div><div class="stat-label">Offers</div></div><div class="stat-item"><div class="stat-num c-amber">${committed}</div><div class="stat-label">Committed</div></div>`;
+  g('charlotte-empty').style.display=rows.length?'none':'block';
+  g('charlotte-footer').textContent=`Showing ${rows.length} of ${DATA.charlotte.length} schools`;
+  const exp=expandedId.charlotte;
+  g('charlotte-body').innerHTML=rows.map(c=>`<tr class="${exp===c.id?'sel':''}" onclick="toggleRow('charlotte',${c.id})">
+    <td><i class="ti ti-chevron-right chev${exp===c.id?' open':''}"></i></td>
+    <td class="td-name">${esc(c.school)}</td><td class="td-muted">${esc(c.coach)}</td>
+    <td><span class="badge ${lv(c.level)}">${esc(c.level)}</span></td>
+    <td class="td-muted">${esc(c.conf)}</td>
+    <td><span class="badge ${stCharlotte(c.stage)}">${esc(c.stage)}</span></td>
+    <td class="td-muted">${esc(c.last)}</td><td class="td-tiny">${esc(c.notes)||'—'}</td>
+  </tr>${exp===c.id?makeEditRow(8,`<div class="ep-grid g4">
+    ${ef('School','ec_school',c.school)}${ef('Coach','ec_coach',c.coach)}
+    ${es('Level','ec_level',c.level,['D1','D2','D3'])}${ef('Conference','ec_conf',c.conf)}
+    ${es('Stage','ec_stage',c.stage,['Interest sent','Film sent','Call scheduled','Offer','Committed','Dead'])}${ef('Last contact','ec_last',c.last,'date')}
+    ${et('Notes','ec_notes',c.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveCharlotte(${c.id},event)">Save</button><button class="btn-del" onclick="deleteItem('charlotte',${c.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,c.id,'charlotte'):''}
+  `).join('');
+}
+function saveCharlotte(id,e){e.stopPropagation();const c=DATA.charlotte.find(x=>x.id===id);if(!c)return;
+  c.school=gv('ec_school');c.coach=gv('ec_coach');c.level=gv('ec_level');c.conf=gv('ec_conf');c.stage=gv('ec_stage');c.last=gv('ec_last');c.notes=gv('ec_notes');
+  expandedId.charlotte=null;renderCharlotte();}
+
+// ===== COACHES =====
+function renderCoaches(){
+  const q=(g('coaches-search').value||'').toLowerCase();
+  const lv2=gv('coaches-level'),st=gv('coaches-status'),cf=gv('coaches-conf');
+  const confs=[...new Set(DATA.coaches.map(c=>c.conf))].sort();
+  const cfSel=g('coaches-conf');const cur=cfSel.value;
+  cfSel.innerHTML='<option value="">All confs</option>'+confs.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+  const rows=DATA.coaches.filter(c=>{
+    if(q&&!`${c.name} ${c.school} ${c.conf} ${c.role}`.toLowerCase().includes(q)) return false;
+    if(lv2&&c.level!==lv2) return false;
+    if(st&&c.status!==st) return false;
+    if(cf&&c.conf!==cf) return false;
+    return true;
+  });
+  const total=DATA.coaches.length,active=DATA.coaches.filter(c=>c.status==='Active convo').length,warm=DATA.coaches.filter(c=>c.status==='Warm lead').length,prospect=DATA.coaches.filter(c=>c.status==='Prospect').length;
+  g('coaches-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${total}</div><div class="stat-label">Total</div></div><div class="stat-item"><div class="stat-num c-green">${active}</div><div class="stat-label">Active</div></div><div class="stat-item"><div class="stat-num c-amber">${warm}</div><div class="stat-label">Warm leads</div></div><div class="stat-item"><div class="stat-num c-purple">${prospect}</div><div class="stat-label">Prospects</div></div>`;
+  g('coaches-empty').style.display=rows.length?'none':'block';
+  g('coaches-footer').textContent=`Showing ${rows.length} of ${DATA.coaches.length} coaches`;
+  const exp=expandedId.coaches;
+  g('coaches-body').innerHTML=rows.map(c=>`<tr class="${exp===c.id?'sel':''}" onclick="toggleRow('coaches',${c.id})">
+    <td><i class="ti ti-chevron-right chev${exp===c.id?' open':''}"></i></td>
+    <td class="td-name">${esc(c.name)}</td><td class="td-muted">${esc(c.school)}</td>
+    <td class="td-muted">${esc(c.role)}</td>
+    <td><span class="badge ${lv(c.level)}">${esc(c.level)}</span></td>
+    <td class="td-muted">${esc(c.conf)}</td>
+    <td><span class="badge ${stCoach(c.status)}">${esc(c.status)}</span></td>
+    <td class="td-tiny">${esc(c.notes)||'—'}</td>
+  </tr>${exp===c.id?makeEditRow(8,`<div class="ep-grid g4">
+    ${ef('Name','eco_name',c.name)}${ef('School','eco_school',c.school)}
+    ${ef('Role','eco_role',c.role)}${ef('Conference','eco_conf',c.conf)}
+    ${es('Level','eco_level',c.level,['D1','D2','D3','JUCO'])}${es('Status','eco_status',c.status,['Active convo','Warm lead','Prospect','Emailed','Cold'])}
+    ${ef('Via','eco_via',c.via||'')}${et('Notes','eco_notes',c.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveCoach(${c.id},event)">Save</button><button class="btn-del" onclick="deleteItem('coaches',${c.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,c.id,'coaches'):''}
+  `).join('');
+}
+function saveCoach(id,e){e.stopPropagation();const c=DATA.coaches.find(x=>x.id===id);if(!c)return;
+  c.name=gv('eco_name');c.school=gv('eco_school');c.role=gv('eco_role');c.conf=gv('eco_conf');c.level=gv('eco_level');c.status=gv('eco_status');c.via=gv('eco_via');c.notes=gv('eco_notes');
+  expandedId.coaches=null;renderCoaches();}
+
+// ===== FILM =====
+function renderFilm(){
+  const q=(g('film-search').value||'').toLowerCase();
+  const st=gv('film-status');
+  const rows=DATA.film.filter(f=>{
+    if(q&&!`${f.athlete} ${f.type} ${f.editor}`.toLowerCase().includes(q)) return false;
+    if(st&&f.status!==st) return false;
+    return true;
+  });
+  const total=DATA.film.length,ready=DATA.film.filter(f=>f.status==='Ready').length,editing=DATA.film.filter(f=>f.status==='In editing').length;
+  g('film-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${total}</div><div class="stat-label">Total</div></div><div class="stat-item"><div class="stat-num c-green">${ready}</div><div class="stat-label">Ready</div></div><div class="stat-item"><div class="stat-num c-amber">${editing}</div><div class="stat-label">In editing</div></div>`;
+  g('film-empty').style.display=rows.length?'none':'block';
+  g('film-footer').textContent=`Showing ${rows.length} of ${DATA.film.length} items`;
+  const exp=expandedId.film;
+  g('film-body').innerHTML=rows.map(f=>`<tr class="${exp===f.id?'sel':''}" onclick="toggleRow('film',${f.id})">
+    <td><i class="ti ti-chevron-right chev${exp===f.id?' open':''}"></i></td>
+    <td class="td-name">${esc(f.athlete)}</td><td class="td-muted">${esc(f.type)}</td>
+    <td><span class="badge ${stFilm(f.status)}">${esc(f.status)}</span></td>
+    <td class="td-muted">${esc(f.editor)}</td><td class="td-muted">${esc(f.due)}</td>
+    <td class="td-tiny">${f.link?`<a href="${esc(f.link)}" target="_blank">View</a>`:'—'}</td>
+    <td class="td-tiny">${esc(f.notes)||'—'}</td>
+  </tr>${exp===f.id?makeEditRow(8,`<div class="ep-grid">
+    ${ef('Athlete','ef_athlete',f.athlete)}${ef('Type','ef_type',f.type)}
+    ${es('Status','ef_status',f.status,['Not started','In editing','Ready','Sent'])}${ef('Editor','ef_editor',f.editor)}
+    ${ef('Due date','ef_due',f.due,'date')}${ef('Link','ef_link',f.link)}
+    ${et('Notes','ef_notes',f.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveFilm(${f.id},event)">Save</button><button class="btn-del" onclick="deleteItem('film',${f.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,f.id,'film'):''}
+  `).join('');
+}
+function saveFilm(id,e){e.stopPropagation();const f=DATA.film.find(x=>x.id===id);if(!f)return;
+  f.athlete=gv('ef_athlete');f.type=gv('ef_type');f.status=gv('ef_status');f.editor=gv('ef_editor');f.due=gv('ef_due');f.link=gv('ef_link');f.notes=gv('ef_notes');
+  expandedId.film=null;renderFilm();}
+
+// ===== REVENUE =====
+function renderRevenue(){
+  const q=(g('revenue-search').value||'').toLowerCase();
+  const ty=gv('revenue-type'),st=gv('revenue-status');
+  const rows=DATA.revenue.filter(r=>{
+    if(q&&!`${r.client} ${r.type} ${r.notes}`.toLowerCase().includes(q)) return false;
+    if(ty&&r.type!==ty) return false;
+    if(st&&r.status!==st) return false;
+    return true;
+  });
+  const totalRev=DATA.revenue.filter(r=>r.status==='Paid').reduce((a,b)=>a+b.amount,0);
+  const pendRev=DATA.revenue.filter(r=>r.status==='Pending').reduce((a,b)=>a+b.amount,0);
+  g('rev-metrics').innerHTML=`<div class="metric-card"><div class="mc-label">Total collected</div><div class="mc-val c-green">$${totalRev.toLocaleString()}</div><div class="mc-sub">AUD — paid invoices</div></div><div class="metric-card"><div class="mc-label">Pending</div><div class="mc-val c-amber">$${pendRev.toLocaleString()}</div><div class="mc-sub">Outstanding invoices</div></div><div class="metric-card"><div class="mc-label">Pipeline total</div><div class="mc-val">$${(totalRev+pendRev).toLocaleString()}</div><div class="mc-sub">Paid + pending</div></div>`;
+  g('revenue-empty').style.display=rows.length?'none':'block';
+  g('revenue-footer').textContent=`Showing ${rows.length} of ${DATA.revenue.length} entries`;
+  const exp=expandedId.revenue;
+  g('revenue-body').innerHTML=rows.map(r=>`<tr class="${exp===r.id?'sel':''}" onclick="toggleRow('revenue',${r.id})">
+    <td><i class="ti ti-chevron-right chev${exp===r.id?' open':''}"></i></td>
+    <td class="td-name">${esc(r.client)}</td><td class="td-muted">${esc(r.type)}</td>
+    <td class="td-name">$${r.amount.toLocaleString()}</td>
+    <td><span class="badge ${stRev(r.status)}">${esc(r.status)}</span></td>
+    <td class="td-muted">${esc(r.date)}</td><td class="td-tiny">${esc(r.notes)||'—'}</td>
+  </tr>${exp===r.id?makeEditRow(7,`<div class="ep-grid">
+    ${ef('Client','er_client',r.client)}${ef('Type','er_type',r.type)}
+    ${ef('Amount','er_amount',r.amount,'number')}${es('Status','er_status',r.status,['Paid','Pending','Overdue'])}
+    ${ef('Date','er_date',r.date,'date')}${et('Notes','er_notes',r.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveRevenue(${r.id},event)">Save</button><button class="btn-del" onclick="deleteItem('revenue',${r.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,r.id,'revenue'):''}
+  `).join('');
+}
+function saveRevenue(id,e){e.stopPropagation();const r=DATA.revenue.find(x=>x.id===id);if(!r)return;
+  r.client=gv('er_client');r.type=gv('er_type');r.amount=parseFloat(gv('er_amount'))||0;r.status=gv('er_status');r.date=gv('er_date');r.notes=gv('er_notes');
+  expandedId.revenue=null;renderRevenue();}
+
+// ===== CONTENT =====
+function renderContent(){
+  const q=(g('content-search').value||'').toLowerCase();
+  const pl=gv('content-platform'),st=gv('content-status');
+  const rows=DATA.content.filter(c=>{
+    if(q&&!`${c.title} ${c.platform} ${c.type} ${c.owner}`.toLowerCase().includes(q)) return false;
+    if(pl&&c.platform!==pl) return false;
+    if(st&&c.status!==st) return false;
+    return true;
+  });
+  const posted=DATA.content.filter(c=>c.status==='Posted').length,sched=DATA.content.filter(c=>c.status==='Scheduled').length;
+  g('content-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${DATA.content.length}</div><div class="stat-label">Total</div></div><div class="stat-item"><div class="stat-num c-green">${posted}</div><div class="stat-label">Posted</div></div><div class="stat-item"><div class="stat-num c-amber">${sched}</div><div class="stat-label">Scheduled</div></div>`;
+  g('content-empty').style.display=rows.length?'none':'block';
+  g('content-footer').textContent=`Showing ${rows.length} of ${DATA.content.length} items`;
+  const exp=expandedId.content;
+  g('content-body').innerHTML=rows.map(c=>`<tr class="${exp===c.id?'sel':''}" onclick="toggleRow('content',${c.id})">
+    <td><i class="ti ti-chevron-right chev${exp===c.id?' open':''}"></i></td>
+    <td class="td-name">${esc(c.title)}</td><td><span class="tag">${esc(c.platform)}</span></td>
+    <td class="td-muted">${esc(c.type)}</td>
+    <td><span class="badge ${stContent(c.status)}">${esc(c.status)}</span></td>
+    <td class="td-muted">${esc(c.date)}</td><td class="td-muted">${esc(c.owner)}</td>
+    <td class="td-tiny">${esc(c.notes)||'—'}</td>
+  </tr>${exp===c.id?makeEditRow(8,`<div class="ep-grid">
+    ${ef('Title','econ_title',c.title)}${es('Platform','econ_platform',c.platform,['Instagram','TikTok','YouTube','LinkedIn'])}
+    ${ef('Type','econ_type',c.type)}${es('Status','econ_status',c.status,['Idea','Scripting','Filming','Editing','Scheduled','Posted'])}
+    ${ef('Date','econ_date',c.date,'date')}${ef('Owner','econ_owner',c.owner)}
+    ${et('Notes','econ_notes',c.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveContent(${c.id},event)">Save</button><button class="btn-del" onclick="deleteItem('content',${c.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,c.id,'content'):''}
+  `).join('');
+}
+function saveContent(id,e){e.stopPropagation();const c=DATA.content.find(x=>x.id===id);if(!c)return;
+  c.title=gv('econ_title');c.platform=gv('econ_platform');c.type=gv('econ_type');c.status=gv('econ_status');c.date=gv('econ_date');c.owner=gv('econ_owner');c.notes=gv('econ_notes');
+  expandedId.content=null;renderContent();}
+
+// ===== CAMPS =====
+function renderCamps(){
+  const q=(g('camps-search').value||'').toLowerCase();
+  const st=gv('camps-status');
+  const rows=DATA.camps.filter(c=>{
+    if(q&&!`${c.name} ${c.location} ${c.notes}`.toLowerCase().includes(q)) return false;
+    if(st&&c.status!==st) return false;
+    return true;
+  });
+  const totalCamps=DATA.camps.length,open=DATA.camps.filter(c=>c.status==='Open').length,totalRev=DATA.camps.reduce((a,b)=>a+b.revenue,0);
+  g('camps-stats').innerHTML=`<div class="stat-item"><div class="stat-num">${totalCamps}</div><div class="stat-label">Camps</div></div><div class="stat-item"><div class="stat-num c-green">${open}</div><div class="stat-label">Open reg</div></div><div class="stat-item"><div class="stat-num c-yellow">$${totalRev.toLocaleString()}</div><div class="stat-label">Revenue</div></div>`;
+  g('camps-empty').style.display=rows.length?'none':'block';
+  g('camps-footer').textContent=`Showing ${rows.length} of ${DATA.camps.length} camps`;
+  const exp=expandedId.camps;
+  g('camps-body').innerHTML=rows.map(c=>`<tr class="${exp===c.id?'sel':''}" onclick="toggleRow('camps',${c.id})">
+    <td><i class="ti ti-chevron-right chev${exp===c.id?' open':''}"></i></td>
+    <td class="td-name">${esc(c.name)}</td><td class="td-muted">${esc(c.date)}</td>
+    <td class="td-muted">${esc(c.location)}</td>
+    <td class="td-muted">${c.capacity}</td><td class="td-muted">${c.registered}</td>
+    <td><span class="badge ${stCamp(c.status)}">${esc(c.status)}</span></td>
+    <td class="td-name">${c.revenue?'$'+c.revenue.toLocaleString():'—'}</td>
+    <td class="td-tiny">${esc(c.notes)||'—'}</td>
+  </tr>${exp===c.id?makeEditRow(9,`<div class="ep-grid g4">
+    ${ef('Camp name','ecamp_name',c.name)}${ef('Date','ecamp_date',c.date,'date')}
+    ${ef('Location','ecamp_loc',c.location)}${es('Status','ecamp_status',c.status,['Planning','Open','Full','Complete'])}
+    ${ef('Capacity','ecamp_cap',c.capacity,'number')}${ef('Registered','ecamp_reg',c.registered,'number')}
+    ${ef('Revenue','ecamp_rev',c.revenue,'number')}${et('Notes','ecamp_notes',c.notes)}
+  </div><div class="ep-actions"><button class="btn-save" onclick="saveCamp(${c.id},event)">Save</button><button class="btn-del" onclick="deleteItem('camps',${c.id},event)"><i class="ti ti-trash"></i>Delete</button></div>`,c.id,'camps'):''}
+  `).join('');
+}
+function saveCamp(id,e){e.stopPropagation();const c=DATA.camps.find(x=>x.id===id);if(!c)return;
+  c.name=gv('ecamp_name');c.date=gv('ecamp_date');c.location=gv('ecamp_loc');c.status=gv('ecamp_status');c.capacity=parseInt(gv('ecamp_cap'))||0;c.registered=parseInt(gv('ecamp_reg'))||0;c.revenue=parseFloat(gv('ecamp_rev'))||0;c.notes=gv('ecamp_notes');
+  expandedId.camps=null;renderCamps();}
+
+// ===== DELETE =====
+function deleteItem(section, id, e){
+  e.stopPropagation();
+  if(!confirm('Delete this item?')) return;
+  DATA[section]=DATA[section].filter(x=>x.id!==id);
+  expandedId[section]=null;
+  const renders={tasks:renderTasks,athletes:renderAthletes,charlotte:renderCharlotte,coaches:renderCoaches,film:renderFilm,revenue:renderRevenue,content:renderContent,camps:renderCamps};
+  if(renders[section]) renders[section]();
+}
+
+// ===== ADD MODAL =====
+const MODALS = {
+  links:`<div class="modal-grid">
+    <div class="ef"><label>Name</label><input id="ma_name" placeholder="e.g. Hudl"></div>
+    <div class="ef"><label>URL</label><input id="ma_url" placeholder="https://..."></div>
+    <div class="ef"><label>Category</label><input id="ma_cat" placeholder="e.g. Recruiting"></div>
+    <div class="ef"><label>Icon (Tabler name)</label><input id="ma_icon" placeholder="e.g. ti-video"></div>
+  </div>`,
+  tasks:`<div class="modal-grid">
+    <div class="ef full"><label>Task</label><input id="ma_task" placeholder="Task description"></div>
+    <div class="ef"><label>Owner</label><select id="ma_owner"><option>Dillon</option><option>Anthony</option><option>Shannon</option><option>Jeff</option><option>Shobana</option></select></div>
+    <div class="ef"><label>Priority</label><select id="ma_pri"><option>High</option><option>Medium</option><option>Low</option></select></div>
+    <div class="ef"><label>Status</label><select id="ma_status"><option>Not started</option><option>In progress</option><option>Done</option></select></div>
+    <div class="ef"><label>Due date</label><input id="ma_due" type="date"></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  athletes:`<div class="modal-grid">
+    <div class="ef"><label>Name</label><input id="ma_name"></div>
+    <div class="ef"><label>Sport</label><input id="ma_sport"></div>
+    <div class="ef"><label>Target level</label><input id="ma_target" placeholder="e.g. D1/D2"></div>
+    <div class="ef"><label>Stage</label><select id="ma_stage"><option>Active</option><option>Committed</option><option>Prospect</option><option>Inactive</option></select></div>
+    <div class="ef"><label>GPA</label><input id="ma_gpa"></div>
+    <div class="ef"><label>Grad year</label><input id="ma_grad"></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  charlotte:`<div class="modal-grid">
+    <div class="ef"><label>School</label><input id="ma_school"></div>
+    <div class="ef"><label>Coach</label><input id="ma_coach"></div>
+    <div class="ef"><label>Level</label><select id="ma_level"><option>D1</option><option>D2</option><option>D3</option></select></div>
+    <div class="ef"><label>Conference</label><input id="ma_conf"></div>
+    <div class="ef"><label>Stage</label><select id="ma_stage"><option>Interest sent</option><option>Film sent</option><option>Call scheduled</option><option>Offer</option><option>Committed</option><option>Dead</option></select></div>
+    <div class="ef"><label>Last contact</label><input id="ma_last" type="date"></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  coaches:`<div class="modal-grid">
+    <div class="ef"><label>Name</label><input id="ma_name"></div>
+    <div class="ef"><label>School</label><input id="ma_school"></div>
+    <div class="ef"><label>Role</label><input id="ma_role" placeholder="Head Coach"></div>
+    <div class="ef"><label>Level</label><select id="ma_level"><option>D1</option><option>D2</option><option>D3</option><option>JUCO</option></select></div>
+    <div class="ef"><label>Conference</label><input id="ma_conf"></div>
+    <div class="ef"><label>Status</label><select id="ma_status"><option>Prospect</option><option>Active convo</option><option>Warm lead</option><option>Emailed</option><option>Cold</option></select></div>
+    <div class="ef"><label>Via</label><input id="ma_via" placeholder="Direct"></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  film:`<div class="modal-grid">
+    <div class="ef"><label>Athlete</label><input id="ma_athlete"></div>
+    <div class="ef"><label>Type</label><input id="ma_type" placeholder="Highlight reel"></div>
+    <div class="ef"><label>Status</label><select id="ma_status"><option>Not started</option><option>In editing</option><option>Ready</option><option>Sent</option></select></div>
+    <div class="ef"><label>Editor</label><input id="ma_editor"></div>
+    <div class="ef"><label>Due date</label><input id="ma_due" type="date"></div>
+    <div class="ef"><label>Link</label><input id="ma_link" placeholder="https://..."></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  revenue:`<div class="modal-grid">
+    <div class="ef"><label>Client</label><input id="ma_client"></div>
+    <div class="ef"><label>Type</label><select id="ma_type"><option>Pathway</option><option>NIL</option><option>Camp</option><option>Retainer</option><option>Other</option></select></div>
+    <div class="ef"><label>Amount ($)</label><input id="ma_amount" type="number"></div>
+    <div class="ef"><label>Status</label><select id="ma_status"><option>Paid</option><option>Pending</option><option>Overdue</option></select></div>
+    <div class="ef"><label>Date</label><input id="ma_date" type="date"></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  content:`<div class="modal-grid">
+    <div class="ef full"><label>Title</label><input id="ma_title"></div>
+    <div class="ef"><label>Platform</label><select id="ma_platform"><option>Instagram</option><option>TikTok</option><option>YouTube</option><option>LinkedIn</option></select></div>
+    <div class="ef"><label>Type</label><input id="ma_type" placeholder="Reel, Post, Video..."></div>
+    <div class="ef"><label>Status</label><select id="ma_status"><option>Idea</option><option>Scripting</option><option>Filming</option><option>Editing</option><option>Scheduled</option><option>Posted</option></select></div>
+    <div class="ef"><label>Date</label><input id="ma_date" type="date"></div>
+    <div class="ef"><label>Owner</label><select id="ma_owner"><option>Dillon</option><option>Anthony</option><option>Shannon</option></select></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+  camps:`<div class="modal-grid">
+    <div class="ef full"><label>Camp name</label><input id="ma_name"></div>
+    <div class="ef"><label>Date</label><input id="ma_date" type="date"></div>
+    <div class="ef"><label>Location</label><input id="ma_location"></div>
+    <div class="ef"><label>Capacity</label><input id="ma_capacity" type="number"></div>
+    <div class="ef"><label>Status</label><select id="ma_status"><option>Planning</option><option>Open</option><option>Full</option><option>Complete</option></select></div>
+    <div class="ef full"><label>Notes</label><textarea id="ma_notes" rows="2"></textarea></div>
+  </div>`,
+};
+
+let modalSection = '';
+function openModal(section){
+  modalSection=section;
+  g('modal-title').textContent = SECTIONS[section].addLabel;
+  g('modal-body').innerHTML = MODALS[section]||'';
+  g('modal').style.display='block';
+}
+function closeModal(){g('modal').style.display='none';}
+
+function saveModal(){
+  const id = ++nextId;
+  const mv = id => (g(id)||{}).value||'';
+  const saves = {
+    links:()=>{DATA.links.push({id,name:mv('ma_name'),url:mv('ma_url'),cat:mv('ma_cat'),icon:mv('ma_icon')||'ti-link'});renderLinks();},
+    tasks:()=>{DATA.tasks.push({id,task:mv('ma_task'),owner:mv('ma_owner'),priority:mv('ma_pri'),status:mv('ma_status'),due:mv('ma_due'),notes:mv('ma_notes')});renderTasks();},
+    athletes:()=>{DATA.athletes.push({id,name:mv('ma_name'),sport:mv('ma_sport'),target:mv('ma_target'),stage:mv('ma_stage'),gpa:mv('ma_gpa'),grad:mv('ma_grad'),notes:mv('ma_notes')});renderAthletes();},
+    charlotte:()=>{DATA.charlotte.push({id,school:mv('ma_school'),coach:mv('ma_coach'),level:mv('ma_level'),conf:mv('ma_conf'),stage:mv('ma_stage'),last:mv('ma_last'),notes:mv('ma_notes')});renderCharlotte();},
+    coaches:()=>{DATA.coaches.push({id,name:mv('ma_name'),school:mv('ma_school'),role:mv('ma_role'),level:mv('ma_level'),conf:mv('ma_conf'),status:mv('ma_status'),via:mv('ma_via'),notes:mv('ma_notes')});renderCoaches();},
+    film:()=>{DATA.film.push({id,athlete:mv('ma_athlete'),type:mv('ma_type'),status:mv('ma_status'),editor:mv('ma_editor'),due:mv('ma_due'),link:mv('ma_link'),notes:mv('ma_notes')});renderFilm();},
+    revenue:()=>{DATA.revenue.push({id,client:mv('ma_client'),type:mv('ma_type'),amount:parseFloat(mv('ma_amount'))||0,status:mv('ma_status'),date:mv('ma_date'),notes:mv('ma_notes')});renderRevenue();},
+    content:()=>{DATA.content.push({id,title:mv('ma_title'),platform:mv('ma_platform'),type:mv('ma_type'),status:mv('ma_status'),date:mv('ma_date'),owner:mv('ma_owner'),notes:mv('ma_notes')});renderContent();},
+    camps:()=>{DATA.camps.push({id,name:mv('ma_name'),date:mv('ma_date'),location:mv('ma_location'),capacity:parseInt(mv('ma_capacity'))||0,registered:0,status:mv('ma_status'),revenue:0,notes:mv('ma_notes')});renderCamps();},
+  };
+  if(saves[modalSection]) saves[modalSection]();
+  closeModal();
+}
+
+// ===== INIT =====
+renderLinks();
+updateBadge();
+</script>
+</body>
+</html>
